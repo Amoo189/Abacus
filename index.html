@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hossein-Amoo</title>
+<style>
+    body {
+        font-family: Tahoma, sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #ffe3b3, #cc9966);
+        margin: 0;
+        height: 100vh;
+    }
+
+    .abacus {
+        display: flex;
+        gap: 20px;
+        padding: 30px;
+        background: #a0522d;
+        border-radius: 25px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    .column {
+        position: relative;
+        width: 60px;
+        height: 400px;
+        background-color: #deb887;
+        border-radius: 12px;
+        display: flex;
+        justify-content: center;
+    }
+
+    .rod {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 6px;
+        background-color: #333;
+        border-radius: 3px;
+    }
+
+    .bead {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: radial-gradient(circle at 30% 30%, #ffcc66, #cc6600);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+        cursor: grab;
+        touch-action: none;
+        transition: top 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        user-select: none;
+    }
+
+    .bead.lower {
+        background: radial-gradient(circle at 30% 30%, #66ccff, #0066cc);
+    }
+
+    /* افکت ارتعاش */
+    @keyframes shake {
+        0% { transform: translateX(-50%) translateY(0); }
+        20% { transform: translateX(-50%) translateY(-3px); }
+        40% { transform: translateX(-50%) translateY(3px); }
+        60% { transform: translateX(-50%) translateY(-3px); }
+        80% { transform: translateX(-50%) translateY(3px); }
+        100% { transform: translateX(-50%) translateY(0); }
+    }
+
+    .shake {
+        animation: shake 0.2s ease;
+    }
+
+    #result {
+        margin-top: 25px;
+        font-size: 26px;
+        font-weight: bold;
+        color: #4b2e0f;
+        text-shadow: 1px 1px 2px #fff;
+    }
+</style>
+</head>
+<body>
+
+<div class="abacus">
+    <div class="column" id="col1"><div class="rod"></div></div>
+    <div class="column" id="col2"><div class="rod"></div></div>
+    <div class="column" id="col3"><div class="rod"></div></div>
+    <div class="column" id="col4"><div class="rod"></div></div>
+    <div class="column" id="col5"><div class="rod"></div></div>
+</div>
+
+<div id="result">مجموع: 0</div>
+
+<!-- صداهای جداگانه -->
+<audio id="soundUpper" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
+<audio id="soundLower" src="https://actions.google.com/sounds/v1/cartoon/wood_pebble_impact.ogg"></audio>
+
+<script>
+const COLUMN_COUNT = 5;
+const UPPER_Y = 40;
+const UPPER_ACTIVE_Y = 110;
+const LOWER_START_Y = 160;
+const LOWER_GAP = 60;
+const LOWER_ACTIVE_GAP = 70;
+
+// پخش صدا با افکت ارتعاش
+function playBeadSound(bead){
+    if(bead.dataset.type==='upper'){
+        document.getElementById('soundUpper').currentTime = 0;
+        document.getElementById('soundUpper').play();
+    } else {
+        document.getElementById('soundLower').currentTime = 0;
+        document.getElementById('soundLower').play();
+    }
+    bead.classList.add('shake');
+    setTimeout(()=>bead.classList.remove('shake'), 200);
+}
+
+// ایجاد ستون‌ها
+function createColumn(id){
+    const col = document.getElementById(id);
+
+    const upper = document.createElement('div');
+    upper.className = 'bead';
+    upper.dataset.value = 5;
+    upper.dataset.type = 'upper';
+    upper.style.top = UPPER_Y+'px';
+    addDrag(upper,'upper');
+    col.appendChild(upper);
+
+    for(let i=0;i<4;i++){
+        const bead = document.createElement('div');
+        bead.className='bead lower';
+        bead.dataset.value=1;
+        bead.dataset.type='lower';
+        bead.dataset.index=i;
+        bead.style.top = (LOWER_START_Y + i*LOWER_GAP)+'px';
+        addDrag(bead,'lower',i);
+        col.appendChild(bead);
+    }
+}
+
+// کشیدن مهره‌ها با ماوس و لمس موبایل
+function addDrag(bead,type,index=0){
+    let startY=0, startTop=0, isDragging=false;
+
+    function move(e){
+        e.preventDefault();
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        let delta = clientY - startY;
+        let newTop = startTop + delta;
+
+        if(type==='upper'){
+            if(newTop<UPPER_Y) newTop=UPPER_Y;
+            if(newTop>UPPER_ACTIVE_Y) newTop=UPPER_ACTIVE_Y;
+        } else {
+            const minY = LOWER_START_Y + index*LOWER_GAP;
+            const maxY = minY + LOWER_ACTIVE_GAP;
+            if(newTop<minY) newTop=minY;
+            if(newTop>maxY) newTop=maxY;
+        }
+
+        bead.style.top = newTop + 'px';
+    }
+
+    function start(e){
+        e.preventDefault();
+        startY = e.touches ? e.touches[0].clientY : e.clientY;
+        startTop = parseInt(bead.style.top);
+        isDragging=true;
+        document.addEventListener('mousemove', move);
+        document.addEventListener('mouseup', end);
+        document.addEventListener('touchmove', move, {passive:false});
+        document.addEventListener('touchend', end);
+    }
+
+    function end(){
+        if(isDragging){
+            isDragging=false;
+            document.removeEventListener('mousemove', move);
+            document.removeEventListener('mouseup', end);
+            document.removeEventListener('touchmove', move);
+            document.removeEventListener('touchend', end);
+            snap(bead,type,index);
+            playBeadSound(bead);
+            updateResult();
+        }
+    }
+
+    bead.addEventListener('mousedown', start);
+    bead.addEventListener('touchstart', start, {passive:false});
+}
+
+// اسنپ و ارتعاش مهره‌ها
+function snap(bead,type,index){
+    if(type==='upper'){
+        const top = parseInt(bead.style.top);
+        bead.style.top = (top>(UPPER_Y+UPPER_ACTIVE_Y)/2 ? UPPER_ACTIVE_Y : UPPER_Y)+'px';
+    } else {
+        const minY = LOWER_START_Y + index*LOWER_GAP;
+        const top = parseInt(bead.style.top);
+        bead.style.top = (top>minY+LOWER_ACTIVE_GAP/2 ? minY+LOWER_ACTIVE_GAP : minY)+'px';
+    }
+}
+
+// محاسبه عدد کل
+function updateResult(){
+    let total=0;
+    for(let c=1;c<=COLUMN_COUNT;c++){
+        const col = document.getElementById('col'+c);
+        let val=0;
+        const upper = col.querySelector('.bead[data-type="upper"]');
+        if(parseInt(upper.style.top) === UPPER_ACTIVE_Y) val+=5;
+
+        col.querySelectorAll('.bead.lower').forEach((b,i)=>{
+            const minY = LOWER_START_Y + i*LOWER_GAP;
+            if(parseInt(b.style.top) > minY) val+=1;
+        });
+
+        total = total*10 + val;
+    }
+    document.getElementById('result').innerText='مجموع: '+total;
+}
+
+// ایجاد ستون‌ها
+for(let i=1;i<=COLUMN_COUNT;i++) createColumn('col'+i);
+</script>
+
+</body>
+</html>
