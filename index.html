@@ -118,7 +118,7 @@ function playBeadSound(bead){
     if(bead.dataset.type==='upper'){
         document.getElementById('soundUpper').currentTime = 0;
         document.getElementById('soundUpper').play();
-
+    }
     bead.classList.add('shake');
     setTimeout(()=>bead.classList.remove('shake'), 200);
 }
