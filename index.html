@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hossein-Amoo</title>
+<title>Saleh-Amoo</title>
 <style>
     body {
         font-family: Tahoma, sans-serif;
@@ -103,7 +103,7 @@
 
 <!-- صداهای جداگانه -->
 <audio id="soundUpper" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
-<audio id="soundLower" src="https://actions.google.com/sounds/v1/cartoon/wood_pebble_impact.ogg"></audio>
+<audio id="soundLower" src="https://actions.google.com/sounds/v1/cartoon/wood_pebble_flicks.ogg"></audio>
 
 <script>
 const COLUMN_COUNT = 5;
@@ -118,10 +118,7 @@ function playBeadSound(bead){
     if(bead.dataset.type==='upper'){
         document.getElementById('soundUpper').currentTime = 0;
         document.getElementById('soundUpper').play();
-    } else {
-        document.getElementById('soundLower').currentTime = 0;
-        document.getElementById('soundLower').play();
-    }
+
     bead.classList.add('shake');
     setTimeout(()=>bead.classList.remove('shake'), 200);
 }
